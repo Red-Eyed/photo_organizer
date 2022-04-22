@@ -44,12 +44,17 @@ class Photo:
             if raw_date is None:
                 raw_date = p.stat().st_ctime
 
-        if isinstance(raw_date, float):
-            date = datetime.fromtimestamp(raw_date)
-        elif isinstance(raw_date, str):
-            date = datetime.strptime(raw_date, '%Y:%m:%d %H:%M:%S')
-        else:
-            raise RuntimeError(f"Invalid format! {raw_date}")
+        date = datetime.fromtimestamp(0.)
+        try:
+            if isinstance(raw_date, float):
+                date = datetime.fromtimestamp(raw_date)
+            elif isinstance(raw_date, str):
+                date = datetime.strptime(raw_date, '%Y:%m:%d %H:%M:%S')
+            else:
+                raise RuntimeError(f"Invalid format! {raw_date}")
+        except:
+            logger.error(f"Exception at file: {self._photo.as_posix()}")
+            logger.exception("")
 
         return date
 
