@@ -53,7 +53,8 @@ class Organizer:
                 logger.info(f"Moved: '{src}' -> '{dst}'")
 
             try:
-                set_file_created_time(Path(dst), date.timestamp())
+                if not self._dry_run:
+                    set_file_created_time(Path(dst), date.timestamp())
             except:
                 logger.exception("")
             else:
