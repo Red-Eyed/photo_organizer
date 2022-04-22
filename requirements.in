@@ -1,0 +1,4 @@
+pillow
+tqdm
+pyinstaller
+win32_setctime
