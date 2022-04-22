@@ -34,15 +34,15 @@ class Organizer:
 
     def organize(self):
         for f in tqdm(iterable=self.get_all_media(self._src_dir), desc="Organizing"):
-            p = Photo(f)
-            date = p.date_taken
+            with Photo(f) as p:
+                date = p.date_taken
 
-            dst_path = self._dst_dir / f"{date.year}/{date.month}"
-            if not self._dry_run:
-                dst_path.mkdir(parents=True, exist_ok=True)
+                dst_path = self._dst_dir / f"{date.year}/{date.month}"
+                if not self._dry_run:
+                    dst_path.mkdir(parents=True, exist_ok=True)
 
-            src = f.as_posix()
-            dst = (dst_path / f.name).as_posix()
+                src = f.as_posix()
+                dst = (dst_path / f.name).as_posix()
 
             try:
                 if not self._dry_run:
