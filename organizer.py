@@ -27,9 +27,10 @@ loggert = logging.getLogger(__name__)
 
 
 class Organizer:
-    def __init__(self, src_dir: Path, dst_dir: Path) -> None:
+    def __init__(self, src_dir: Path, dst_dir: Path, dry_run=False) -> None:
         self._src_dir = src_dir.resolve()
         self._dst_dir = dst_dir.resolve()
+        self._dry_run = dry_run
 
     def organize(self):
         for f in tqdm(iterable=self.get_all_media(self._src_dir), desc="Organizing"):
@@ -37,13 +38,15 @@ class Organizer:
             date = p.date_taken
 
             dst_path = self._dst_dir / f"{date.year}/{date.month}"
-            dst_path.mkdir(parents=True, exist_ok=True)
+            if not self._dry_run:
+                dst_path.mkdir(parents=True, exist_ok=True)
 
             src = f.as_posix()
             dst = (dst_path / f.name).as_posix()
 
             try:
-                shutil.move(src, dst)
+                if not self._dry_run:
+                    shutil.move(src, dst)
             except PermissionError:
                 logger.info("PermissionError: cant move '{src}' -> '{dst}'")
             else:
@@ -68,7 +71,8 @@ class Organizer:
         for f in non_media:
             dst = non_media_dst / f.name
             try:
-                shutil.move(f.as_posix(), dst.as_posix())
+                if not self._dry_run:
+                    shutil.move(f.as_posix(), dst.as_posix())
             except PermissionError:
                 logger.info(f"PermissionError: Can't move non media file: '{f.as_posix()}' -> '{dst.as_posix()}'")
             else:
@@ -83,7 +87,8 @@ class Organizer:
             digest = sha256(data).digest()
             if digest in hashes:
                 try:
-                    f.unlink()
+                    if not self._dry_run:
+                        f.unlink()
                 except PermissionError:
                     logger.info(f"Found dublicate: PermissionError: Can't remove '{f}'")
                 else:
@@ -96,10 +101,11 @@ class Organizer:
         for path, _, _ in tqdm(iterable=walk[::-1], desc="Removing empty dirs"):
             if len(os.listdir(path)) == 0:
                 try:
-                    Path(path).rmdir()
+                    if not self._dry_run:
+                        Path(path).rmdir()
                 except PermissionError:
                     logger.info(f"Found empty dir: '{path}'. PermissionError! Can't remove")
-                else:    
+                else:
                     logger.info(f"Found empty dir: '{path}'. Removed.")
 
     @staticmethod
