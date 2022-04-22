@@ -19,7 +19,7 @@ class Photo:
     @property
     def exif(self):
         if self._img is not None:
-            self._img.getexif()
+            return self._img.getexif()
         else:
             return {}
 
