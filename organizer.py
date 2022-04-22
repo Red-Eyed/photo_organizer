@@ -47,15 +47,15 @@ class Organizer:
             try:
                 if not self._dry_run:
                     shutil.move(src, dst)
-            except PermissionError:
-                logger.info("PermissionError: cant move '{src}' -> '{dst}'")
+            except:
+                logger.exception("")
             else:
                 logger.info(f"Moved: '{src}' -> '{dst}'")
 
             try:
                 set_file_created_time(Path(dst), date.timestamp())
-            except PermissionError:
-                logger.info(f"Can't set creation time: '{date}'")
+            except:
+                logger.exception("")
             else:
                 logger.info(f"Set creation time: '{date}'")
 
@@ -73,8 +73,8 @@ class Organizer:
             try:
                 if not self._dry_run:
                     shutil.move(f.as_posix(), dst.as_posix())
-            except PermissionError:
-                logger.info(f"PermissionError: Can't move non media file: '{f.as_posix()}' -> '{dst.as_posix()}'")
+            except:
+                logger.exception("")
             else:
                 logger.info(f"Moved non media file: '{f.as_posix()}' -> '{dst.as_posix()}'")
 
@@ -89,8 +89,8 @@ class Organizer:
                 try:
                     if not self._dry_run:
                         f.unlink()
-                except PermissionError:
-                    logger.info(f"Found dublicate: PermissionError: Can't remove '{f}'")
+                except:
+                    logger.exception("")
                 else:
                     logger.info(f"Found dublicate: {f}. Removed")
             else:

@@ -4,6 +4,7 @@
 __author__ = "Vadym Stupakov"
 __email__ = "vadim.stupakov@gmail.com"
 
+from asyncio.log import logger
 from datetime import datetime
 from pathlib import Path
 from PIL import Image
@@ -37,9 +38,8 @@ class Photo:
                 from_json = self.parse_gphoto_json()
                 if from_json is not None:
                     raw_date = float(from_json["photoTakenTime"]["timestamp"])
-
         except:
-            pass
+            logger.exception("")
         finally:
             if raw_date is None:
                 raw_date = p.stat().st_ctime
@@ -66,7 +66,7 @@ class Photo:
         try:
             self._img = Image.open(self._photo.resolve().as_posix())
         except:
-            pass
+            logger.exception("")
 
         return self
 
