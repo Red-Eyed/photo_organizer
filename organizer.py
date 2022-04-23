@@ -47,6 +47,10 @@ class Organizer:
 
     def organize(self):
         for f in tqdm(iterable=self.get_all_media(self._src_dir), desc="Organizing"):
+            if "edited-" in Path(f).stem:
+                logger.info(f"Skipping edited: '{f.as_posix()}'")
+                continue
+
             with Photo(f) as p:
                 date = p.date_taken
 
@@ -59,6 +63,7 @@ class Organizer:
 
             try:
                 if not self._dry_run:
+
                     shutil.move(src, dst)
             except:
                 logger.exception("")
@@ -71,7 +76,7 @@ class Organizer:
             except:
                 logger.exception("")
             else:
-                logger.info(f"Set creation time: '{date}' to {dst}")
+                logger.info(f"Set creation time: '{date}' to '{dst}'")
 
     def move_non_media_files(self, non_media_dst: Path):
         non_media_dst = Path(non_media_dst)
@@ -106,7 +111,7 @@ class Organizer:
                 except:
                     logger.exception("")
                 else:
-                    logger.info(f"Found dublicate: {f}. Removed")
+                    logger.info(f"Found dublicate: '{f}'. Removed")
             else:
                 hashes.add(digest)
 

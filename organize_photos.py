@@ -17,7 +17,8 @@ if __name__ == '__main__':
 
     logging.basicConfig(
         level=logging.INFO,
-        format='%(levelname)s:%(message)s',
+        format='%(asctime)s:%(levelname)s:%(message)s',
+        datefmt='%H:%M:%S',
         handlers=[logging.FileHandler(log_file.as_posix(), mode="wt", encoding="utf8")]
     )
 

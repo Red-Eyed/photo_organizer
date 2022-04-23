@@ -12,21 +12,14 @@ from tkinter.messagebox import NO
 from PIL import Image
 import json
 
+from utils import find_date_from_str
+
 logger = logging.getLogger(__name__)
 
 
-@lru_cache(maxsize=100000)
-def _all_jsons(file: str):
-    ret = {}
-    for json_file in Path(file).parent.glob("*.json"):
-        d = json.loads(json_file.read_text())
-        filename = cut_title(d["title"])
-        ret[filename] = d
-
-    return ret
-
-
 class Photo:
+    _JSON_CACHE = {}
+
     def __init__(self, photo: Path) -> None:
         self._photo = photo
         self._img = None
@@ -50,45 +43,55 @@ class Photo:
         else:
             return self._photo.name
 
-    @cached_property
-    def gphotos_json(self):
-        jsons = _all_jsons(self._photo.as_posix())
-        try:
-            return jsons[self._photo.name]
-        except KeyError:
-            return None
-
     @property
-    def date_taken(self):
-        raw_date = None
-        p = self._photo
+    def gphotos_json(self):
+        f = self._photo
+        try:
+            return self._JSON_CACHE[f.name]
+        except KeyError:
+            for json_file in f.parent.glob("*.json"):
+                d = json.loads(json_file.read_text())
+                filename = cut_title(d["title"])
+                self._JSON_CACHE[filename] = d
+
+        return self._JSON_CACHE.get(f.name)
+
+    def _get_timestamp(self):
+        timestamp = None
 
         try:
             for tag in [0x0132, 0x9003, 0x9004]:
-                raw_date = self.exif.get(tag)
-                if raw_date is not None:
+                timestamp = self.exif.get(tag)
+                if timestamp is not None:
                     break
 
-            if raw_date is None:
+            if timestamp is None:
                 # try to parse date taken fron the json google photos if exist
                 if self.gphotos_json is not None:
-                    raw_date = float(self.gphotos_json["photoTakenTime"]["timestamp"])
+                    timestamp = float(self.gphotos_json["photoTakenTime"]["timestamp"])
         except:
             logger.exception("")
-        finally:
-            if raw_date is None:
-                raw_date = p.stat().st_ctime
 
-        date = datetime.fromtimestamp(0.)
+        return timestamp
+
+    @property
+    def date_taken(self) -> datetime:
+        timestamp = self._get_timestamp()
+        date = datetime.fromtimestamp(0.0)
+
         try:
-            if isinstance(raw_date, float):
-                date = datetime.fromtimestamp(raw_date)
-            elif isinstance(raw_date, str):
-                date = datetime.strptime(raw_date, '%Y:%m:%d %H:%M:%S')
+            if isinstance(timestamp, float):
+                date = datetime.fromtimestamp(timestamp)
+            elif isinstance(timestamp, str):
+                date = datetime.strptime(timestamp, '%Y:%m:%d %H:%M:%S')
             else:
-                raise RuntimeError(f"Invalid format! {raw_date}")
+                parsed = find_date_from_str(self._photo.as_posix())
+                if parsed:
+                    date = datetime.strptime(parsed, '%Y')
+                else:
+                    logger.warning(f"Can't find date taken for '{self._photo}'")
         except:
-            logger.error(f"Exception at file: {self._photo.as_posix()}")
+            logger.error(f"Exception at file: '{self._photo.as_posix()}'")
             logger.exception("")
 
         return date

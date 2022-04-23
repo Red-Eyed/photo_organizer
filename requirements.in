@@ -2,3 +2,6 @@ pillow
 tqdm
 pyinstaller
 win32_setctime
+python-dateutil
+autopep8
+ipython
