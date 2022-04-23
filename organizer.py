@@ -58,7 +58,7 @@ class Organizer:
             except:
                 logger.exception("")
             else:
-                logger.info(f"Set creation time: '{date}'")
+                logger.info(f"Set creation time: '{date}' to {dst}")
 
     def move_non_media_files(self, non_media_dst: Path):
         non_media_dst = Path(non_media_dst)

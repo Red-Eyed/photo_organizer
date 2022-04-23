@@ -4,11 +4,13 @@
 __author__ = "Vadym Stupakov"
 __email__ = "vadim.stupakov@gmail.com"
 
-from asyncio.log import logger
+import logging
 from datetime import datetime
 from pathlib import Path
 from PIL import Image
 import json
+
+logger = logging.getLogger(__name__)
 
 
 class Photo:
@@ -18,10 +20,14 @@ class Photo:
 
     @property
     def exif(self):
+        ret = {}
         if self._img is not None:
-            return self._img.getexif()
-        else:
-            return {}
+            try:
+                ret = self._img.getexif()
+            except:
+                logger.exception("")
+
+        return ret
 
     @property
     def date_taken(self):
@@ -34,7 +40,7 @@ class Photo:
                     break
 
             if raw_date is None:
-                # try to parse date taken fron json google photos if exist
+                # try to parse date taken fron the json google photos if exist
                 from_json = self.parse_gphoto_json()
                 if from_json is not None:
                     raw_date = float(from_json["photoTakenTime"]["timestamp"])
@@ -64,6 +70,7 @@ class Photo:
             data = json.loads(photo_json.read_text())
         else:
             data = None
+            logger.warning(f"File '{photo_json}' does not exist")
 
         return data
 
