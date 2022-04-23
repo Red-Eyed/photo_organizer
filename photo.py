@@ -4,13 +4,26 @@
 __author__ = "Vadym Stupakov"
 __email__ = "vadim.stupakov@gmail.com"
 
+from functools import cached_property, lru_cache
 import logging
 from datetime import datetime
 from pathlib import Path
+from tkinter.messagebox import NO
 from PIL import Image
 import json
 
 logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=100000)
+def _all_jsons(file: str):
+    ret = {}
+    for json_file in Path(file).parent.glob("*.json"):
+        d = json.loads(json_file.read_text())
+        filename = cut_title(d["title"])
+        ret[filename] = d
+
+    return ret
 
 
 class Photo:
@@ -29,10 +42,27 @@ class Photo:
 
         return ret
 
+    @cached_property
+    def full_name(self):
+        # if this is google photo and related json is present - return full name
+        if self.gphotos_json is not None:
+            return self.gphotos_json["title"]
+        else:
+            return self._photo.name
+
+    @cached_property
+    def gphotos_json(self):
+        jsons = _all_jsons(self._photo.as_posix())
+        try:
+            return jsons[self._photo.name]
+        except KeyError:
+            return None
+
     @property
     def date_taken(self):
         raw_date = None
         p = self._photo
+
         try:
             for tag in [0x0132, 0x9003, 0x9004]:
                 raw_date = self.exif.get(tag)
@@ -41,9 +71,8 @@ class Photo:
 
             if raw_date is None:
                 # try to parse date taken fron the json google photos if exist
-                from_json = self.parse_gphoto_json()
-                if from_json is not None:
-                    raw_date = float(from_json["photoTakenTime"]["timestamp"])
+                if self.gphotos_json is not None:
+                    raw_date = float(self.gphotos_json["photoTakenTime"]["timestamp"])
         except:
             logger.exception("")
         finally:

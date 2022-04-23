@@ -5,6 +5,7 @@ __author__ = "Vadym Stupakov"
 __email__ = "vadim.stupakov@gmail.com"
 
 from asyncio.log import logger
+from functools import cached_property
 from pathlib import Path
 from collections import defaultdict
 import json
@@ -20,7 +21,7 @@ from typing import List
 from tqdm import tqdm
 from PIL import Image
 
-from photo import Photo
+from photo import Photo, cut_title
 from utils import set_file_created_time
 
 loggert = logging.getLogger(__name__)
@@ -32,6 +33,18 @@ class Organizer:
         self._dst_dir = dst_dir.resolve()
         self._dry_run = dry_run
 
+    @cached_property
+    def google_photos_jsnon_map(self):
+        jsons = list(self._src_dir.rglob(f"*.json"))
+        metadata = {}
+        for f in tqdm(iterable=jsons, desc="Collecting Google Photos metadata"):
+            f: Path
+            d = json.load(f.read_text())
+            filename = cut_title(d["title"])
+            metadata[filename] = d
+
+        return metadata
+
     def organize(self):
         for f in tqdm(iterable=self.get_all_media(self._src_dir), desc="Organizing"):
             with Photo(f) as p:
@@ -42,7 +55,7 @@ class Organizer:
                     dst_path.mkdir(parents=True, exist_ok=True)
 
                 src = f.as_posix()
-                dst = (dst_path / f.name).as_posix()
+                dst = (dst_path / p.full_name).as_posix()
 
             try:
                 if not self._dry_run:
