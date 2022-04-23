@@ -54,7 +54,11 @@ class Organizer:
             with Photo(f) as p:
                 date = p.date_taken
 
-                dst_path = self._dst_dir / f"{date.year}/{date.month}"
+                if "screenshot" in f.as_posix().lower():
+                    dst_path = self._dst_dir / f"Screenshots"
+                else:
+                    dst_path = self._dst_dir / f"{date.year}/{date.month}"
+
                 if not self._dry_run:
                     dst_path.mkdir(parents=True, exist_ok=True)
 
@@ -63,7 +67,6 @@ class Organizer:
 
             try:
                 if not self._dry_run:
-
                     shutil.move(src, dst)
             except:
                 logger.exception("")

@@ -83,7 +83,10 @@ class Photo:
             if isinstance(timestamp, float):
                 date = datetime.fromtimestamp(timestamp)
             elif isinstance(timestamp, str):
-                date = datetime.strptime(timestamp, '%Y:%m:%d %H:%M:%S')
+                if "0000:00:00 00:00:00" in timestamp:
+                    date = datetime.fromtimestamp(0.0)
+                else:
+                    date = datetime.strptime(timestamp, '%Y:%m:%d %H:%M:%S')
             else:
                 parsed = find_date_from_str(self._photo.as_posix())
                 if parsed:
